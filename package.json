@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "start": "nodemon src/index.ts",
+    "start": "ts-node-esm src/index.ts",
     "dev": "nodemon src/index.ts"
   },
   "author": "",
@@ -22,10 +22,10 @@
     "discord.js": "^14.11.0",
     "dotenv": "^16.3.1",
     "striptags": "^3.2.0",
-    "ts-node": "^10.9.1",
-    "nodemon": "^2.0.22"
+    "ts-node": "^10.9.1"
   },
   "devDependencies": {
-    "@flydotio/dockerfile": "^0.2.16"
+    "@flydotio/dockerfile": "^0.2.16",
+    "nodemon": "^2.0.22"
   }
 }
