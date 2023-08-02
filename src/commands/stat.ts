@@ -33,7 +33,7 @@ export class StatCommand extends Command {
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
     const text = interaction.options.getString("unit");
     if (!text) return interaction.followUp("No unit name");
     let unit = nameChange(text);

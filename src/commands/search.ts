@@ -33,7 +33,7 @@ export class SearchCommand extends Command {
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
     const text = interaction.options.getString("keyword");
     if (!text) return interaction.followUp("No keyword");
     let unit = nameChange(text);
