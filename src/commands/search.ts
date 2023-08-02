@@ -33,8 +33,9 @@ export class SearchCommand extends Command {
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+    await interaction.deferReply({ ephemeral: true });
     const text = interaction.options.getString("keyword");
-    if (!text) return interaction.reply("No keyword");
+    if (!text) return interaction.followUp("No keyword");
     let unit = nameChange(text);
     const link = `https://aigis.fandom.com/wiki/Special:Search?query=${encodeURI(
       text
@@ -63,14 +64,14 @@ export class SearchCommand extends Command {
           }
         }
         if (out != "") {
-          interaction.reply(out);
+          interaction.followUp(out);
         } else {
-          interaction.reply("No Result");
+          interaction.followUp("No Result");
         }
       })
 
       .catch((err) => {
-        interaction.reply("Can't find anything");
+        interaction.followUp("Can't find anything");
         console.error(err, link);
       });
   }

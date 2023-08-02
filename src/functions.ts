@@ -1,12 +1,22 @@
 var name = require("./library/lib.js").name;
 var suffix = require("./library/suf.js").suffix;
-import { Command } from '@sapphire/framework';
-import { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } from 'discord.js';
+import { Command } from "@sapphire/framework";
+import {
+  EmbedBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+} from "discord.js";
 
 function titleCase(str: string) {
   const str_list = str.toLowerCase().split(" ");
   for (var i = 0; i < str_list.length; i++) {
-    str_list[i] = str_list[i].charAt(0).toUpperCase() + str_list[i].slice(1);
+    if (str_list[i][0] == "(" && str_list[i].length > 1) {
+      str_list[i] =
+        "(" + str_list[i].charAt(1).toUpperCase() + str_list[i].slice(2);
+    } else {
+      str_list[i] = str_list[i].charAt(0).toUpperCase() + str_list[i].slice(1);
+    }
   }
   return str_list.join(" ");
 }
@@ -66,7 +76,10 @@ export const nameChange = function nameChange(text: string) {
         un = name[un];
       }
       unit = un + " " + sur;
-    } else if (np[npl - 1] == "Springs)" && np[npl - 2] == "(Hot") {
+    } else if (
+      np[npl - 1] == "Springs)" &&
+      np[npl - 2].toLowerCase() == "(Hot"
+    ) {
       let sur = "(Hot Springs)";
       np.pop();
       np.pop();
@@ -156,68 +169,71 @@ export const nameChange = function nameChange(text: string) {
   return unit;
 };
 
+export const sendPages = async function (
+  interaction: Command.ChatInputCommandInteraction,
+  pages: EmbedBuilder[]
+) {
+  if (pages.length == 1) {
+    interaction.reply({
+      embeds: [pages[0]],
+    });
+  } else {
+    const backButton = new ButtonBuilder()
+      .setCustomId("back")
+      .setLabel("Prev Page")
+      .setEmoji("⬅️")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true);
 
-export const sendPages = async function(interaction: Command.ChatInputCommandInteraction, pages: EmbedBuilder[]) {
-	if (pages.length == 1) {
-		interaction.reply({
-			embeds: [pages[0]],
-		});
-	}
-	else {
-		const backButton = new ButtonBuilder()
-		.setCustomId('back')
-		.setLabel('Prev Page')
-		.setEmoji('⬅️')
-		.setStyle(ButtonStyle.Secondary)
-		.setDisabled(true)
+    const forwardButton = new ButtonBuilder()
+      .setCustomId("forward")
+      .setLabel("Next Page")
+      .setEmoji("➡️")
+      .setStyle(ButtonStyle.Secondary);
 
-		const forwardButton = new ButtonBuilder()
-		.setCustomId('forward')
-		.setLabel('Next Page')
-		.setEmoji('➡️')
-		.setStyle(ButtonStyle.Secondary);
-
-		var embed = pages[0];
+    var embed = pages[0];
     let page = 1;
     embed = pages[0];
-    embed.setFooter({text: 'Page ' + page + ' of ' + pages.length});
+    embed.setFooter({ text: "Page " + page + " of " + pages.length });
 
-		const row = new ActionRowBuilder<ButtonBuilder>()
-		.addComponents(backButton, forwardButton);
-		const response = await interaction.reply({
-			embeds: [pages[0]],
-			components: [row],
-		});
-		try {
-			const collector = await response.createMessageComponentCollector({ time: 600_000 });
-		
-			collector.on("collect", async confirmation => {
-				if (confirmation.customId === 'back') {
-					if (page > 1) page -= 1
-					embed = pages[page - 1];
-					embed.setFooter({text: 'Page ' + page + ' of ' + pages.length});
-					forwardButton.setDisabled(page == pages.length)
-					backButton.setDisabled(page == 1)
-					await confirmation.update({
-						embeds: [embed],
-						components: [row],
-					})
-				} else if (confirmation.customId === 'forward') {
-					if (page < pages.length) page += 1
-					embed = pages[page - 1];
-					embed.setFooter({text: 'Page ' + page + ' of ' + pages.length});
-					forwardButton.setDisabled(page == pages.length)
-					backButton.setDisabled(page == 1)
-					await confirmation.update({
-						embeds: [embed],
-						components: [row],
-					})
-				}
-			}
-			)
-		}
-		catch {
-			return
-		}
-	}
-}
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      backButton,
+      forwardButton
+    );
+    const response = await interaction.followUp({
+      embeds: [pages[0]],
+      components: [row],
+    });
+    try {
+      const collector = await response.createMessageComponentCollector({
+        time: 600_000,
+      });
+
+      collector.on("collect", async (confirmation) => {
+        if (confirmation.customId === "back") {
+          if (page > 1) page -= 1;
+          embed = pages[page - 1];
+          embed.setFooter({ text: "Page " + page + " of " + pages.length });
+          forwardButton.setDisabled(page == pages.length);
+          backButton.setDisabled(page == 1);
+          await confirmation.update({
+            embeds: [embed],
+            components: [row],
+          });
+        } else if (confirmation.customId === "forward") {
+          if (page < pages.length) page += 1;
+          embed = pages[page - 1];
+          embed.setFooter({ text: "Page " + page + " of " + pages.length });
+          forwardButton.setDisabled(page == pages.length);
+          backButton.setDisabled(page == 1);
+          await confirmation.update({
+            embeds: [embed],
+            components: [row],
+          });
+        }
+      });
+    } catch {
+      return;
+    }
+  }
+};

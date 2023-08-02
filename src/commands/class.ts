@@ -34,16 +34,17 @@ export class ClassCommand extends Command {
   }
 
   public async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
+    await interaction.deferReply({ ephemeral: true });
     const text = interaction.options.getString("unit");
-    if (!text) return interaction.reply("No unit name");
+    if (!text) return interaction.followUp("No unit name");
     let unit = nameChange(text);
     const link = `https://aigis.fandom.com/wiki/${encodeURI(unit)}`;
-    
+
     axios
       .get(link)
       .then((res) => {
         const $ = load(res.data);
-        unit = $(".mw-page-title-main").text()
+        unit = $(".mw-page-title-main").text();
         const link2 = `https://aigis.fandom.com/wiki/${encodeURI(unit)}/stats`;
         axios
           .get(link2)
@@ -54,17 +55,55 @@ export class ClassCommand extends Command {
             const pages: EmbedBuilder[] = [];
             let table_rows = $2(".listtable.bgwhite tr");
             let embed: EmbedBuilder;
-            let des: string = ""
-            let note: string = ""
-            let des_len = 0
-            let note_len = 0
+            let des: string = "";
+            let note: string = "";
+            let des_len = 0;
+            let note_len = 0;
+            let d: { [key: string]: { des: string; note: string } } = {};
+            $(".gcstyle.bgwhite.hsbullet.class-table tbody tr").each(
+              (index, element) => {
+                let temp = $(element);
+                if (temp.find("td").first().text().trim()) {
+                  let curr = 1;
+                  if (des_len) des_len -= 1;
+                  else {
+                    curr += 1;
+                    des = format_note(
+                      temp.find(`td:nth-child(${curr})`).html() || ""
+                    );
+                    des_len =
+                      Number(
+                        temp.find(`td:nth-child(${curr})`).attr("rowspan")
+                      ) - 1;
+                  }
+                  if (note_len) note_len -= 1;
+                  else {
+                    curr += 1;
+                    if (temp.children().length < curr) {
+                      note = "";
+                      note_len = 0;
+                    } else {
+                      note = format_note(
+                        temp.find(`td:nth-child(${curr})`).html() || ""
+                      );
+                      note_len =
+                        Number(
+                          temp.find(`td:nth-child(${curr})`).attr("rowspan")
+                        ) - 1;
+                    }
+                  }
+                }
+                d[temp.find("td").first().text().trim()] = { des, note };
+              }
+            );
+            console.log(d);
 
             table_rows.each(function (index) {
               let start_col: number;
               let temp = $2(this);
               if (index < 2) return;
               if (index >= table_rows.length - 2) return;
-              if (index % 2 != 0) return
+              if (index % 2 != 0) return;
               if (index == 2) start_col = 1;
               else start_col = 0;
 
@@ -75,67 +114,46 @@ export class ClassCommand extends Command {
                 img = new_img;
                 start_col += 1;
               }
-              let class_name: string = ""
+              let class_name: string = "";
               temp.find("td").each((index2, element) => {
                 if (index2 == start_col) {
-                  class_name = 
-                      $(element)
-                        .html()!
-                        .replaceAll(/<[^>]*>/g, "\n")
-                        .replaceAll(/\n+/g, " ")
-                        .trim()
+                  class_name = $2(element)
+                    .html()!
+                    .replaceAll(/<[^>]*>/g, "\n")
+                    .replaceAll(/\n+/g, " ")
+                    .trim();
                 }
               });
-              $(".gcstyle.bgwhite.hsbullet.class-table tbody tr").each((index, element) => {
-                let temp = $(element)
-                if (temp.find("td").first().text().trim() == class_name) {
-                let curr = 1
-                        if (des_len) des_len -= 1
-                else {
-                    curr += 1
-                    des = temp.find(`td:nth-child(${curr})`).html()!
-                                .replaceAll(/<[^>]*>/g, "\n")
-                                .replaceAll(/\n+/g, "\n")
-                                .trim()
-                    des_len = Number(temp.find(`td:nth-child(${curr})`).attr("rowspan"))
-                    
-                    
-                    
-                }
-                    if (note_len) note_len -= 1
-                else {
-                    curr += 1
-                    note = format_note(temp.find(`td:nth-child(${curr})`).html()!)
-                    note_len = Number(temp.find(`td:nth-child(${curr})`).attr("rowspan"))
-                }
-                }
-            })
 
-                check = true;
-                embed = new EmbedBuilder();
-                let send_img = img?.split("/scale-to-width-down/")[0];
-                embed.setTitle(unit);
-                send_img ? embed.setThumbnail(send_img) : null;
-                embed.setURL(link);
-                embed.addFields({name: "Class Name", value: class_name}, {name: "Description", value: des}, {name: "Notes", value: note})
-                pages.push(embed);
-              
+              let { des, note } = d[class_name];
+              check = true;
+              embed = new EmbedBuilder();
+              let send_img = img?.split("/scale-to-width-down/")[0];
+              embed.setTitle(unit);
+              send_img ? embed.setThumbnail(send_img) : null;
+              embed.setURL(link);
+              embed.addFields(
+                { name: "Class Name", value: class_name },
+                { name: "Description", value: des }
+              );
+              note ? embed.addFields({ name: "Notes", value: note }) : null;
+              pages.push(embed);
             });
             if (check) {
               sendPages(interaction, pages);
             }
             if (!check) {
-              interaction.reply("Can't find anything");
+              interaction.followUp("Can't find anything");
             }
           })
           .catch((err) => {
-            interaction.reply("Can't find anything")
-            console.error(err, link2)}
-            );
+            interaction.followUp("Can't find anything");
+            console.error(err, link2);
+          });
       })
       .catch((err) => {
-        interaction.reply("Can't find anything")
-        console.error(err, link)
+        interaction.followUp("Can't find anything");
+        console.error(err, link);
       });
   }
 }
