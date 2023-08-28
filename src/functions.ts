@@ -276,6 +276,13 @@ export const sendPages = async function (
           embed = pages[page - 1];
           embed.setFooter({ text: "Page " + page + " of " + pages.length });
           update(confirmation, embed);
+        }else if (confirmation.customId === "jump") {
+          if ("values" in confirmation) {
+            page = Number(confirmation.values[0])
+          } 
+          embed = pages[page - 1];
+          embed.setFooter({ text: "Page " + page + " of " + pages.length });
+          update(confirmation, embed);
         }
       });
     } catch {
