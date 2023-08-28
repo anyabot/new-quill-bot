@@ -6,6 +6,10 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
+  ButtonInteraction,
+  StringSelectMenuInteraction,
+  CacheType,
+  StringSelectMenuBuilder,
 } from "discord.js";
 
 function titleCase(str: string) {
@@ -180,16 +184,38 @@ export const sendPages = async function (
   } else {
     const backButton = new ButtonBuilder()
       .setCustomId("back")
-      .setLabel("Prev Page")
       .setEmoji("⬅️")
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(true);
 
     const forwardButton = new ButtonBuilder()
       .setCustomId("forward")
-      .setLabel("Next Page")
       .setEmoji("➡️")
       .setStyle(ButtonStyle.Secondary);
+
+    const firstButton = new ButtonBuilder()
+      .setCustomId("first")
+      .setEmoji("⏮️")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(true);
+
+    const lastButton = new ButtonBuilder()
+      .setCustomId("last")
+      .setEmoji("⏭️")
+      .setStyle(ButtonStyle.Secondary);
+
+    const jumpOptions = new StringSelectMenuBuilder()
+      .setCustomId("jump")
+      .setPlaceholder("Jump to a Page")
+      .setOptions(
+        pages.map((_, index) => {
+          let page_num = String(index + 1);
+          return {
+            label: `Jump to Page ${page_num}`,
+            value: page_num,
+          };
+        })
+      );
 
     var embed = pages[0];
     let page = 1;
@@ -197,12 +223,32 @@ export const sendPages = async function (
     embed.setFooter({ text: "Page " + page + " of " + pages.length });
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      firstButton,
       backButton,
-      forwardButton
+      forwardButton,
+      lastButton
     );
+
+    const selectRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      jumpOptions
+    );
+
+    const rows = [selectRow, row]
+
+    const update = async (confirmation: any, embed: EmbedBuilder) => {
+      lastButton.setDisabled(page == pages.length);
+      forwardButton.setDisabled(page == pages.length);
+      backButton.setDisabled(page == 1);
+      firstButton.setDisabled(page == 1);
+      await confirmation.update({
+        embeds: [embed],
+        components: rows,
+      });
+    };
+
     const response = await interaction.followUp({
       embeds: [pages[0]],
-      components: [row],
+      components: rows,
     });
     try {
       const collector = await response.createMessageComponentCollector({
@@ -214,22 +260,22 @@ export const sendPages = async function (
           if (page > 1) page -= 1;
           embed = pages[page - 1];
           embed.setFooter({ text: "Page " + page + " of " + pages.length });
-          forwardButton.setDisabled(page == pages.length);
-          backButton.setDisabled(page == 1);
-          await confirmation.update({
-            embeds: [embed],
-            components: [row],
-          });
+          update(confirmation, embed);
         } else if (confirmation.customId === "forward") {
           if (page < pages.length) page += 1;
           embed = pages[page - 1];
           embed.setFooter({ text: "Page " + page + " of " + pages.length });
-          forwardButton.setDisabled(page == pages.length);
-          backButton.setDisabled(page == 1);
-          await confirmation.update({
-            embeds: [embed],
-            components: [row],
-          });
+          update(confirmation, embed);
+        } else if (confirmation.customId === "first") {
+          page = 1;
+          embed = pages[page - 1];
+          embed.setFooter({ text: "Page " + page + " of " + pages.length });
+          update(confirmation, embed);
+        } else if (confirmation.customId === "last") {
+          page = pages.length;
+          embed = pages[page - 1];
+          embed.setFooter({ text: "Page " + page + " of " + pages.length });
+          update(confirmation, embed);
         }
       });
     } catch {
