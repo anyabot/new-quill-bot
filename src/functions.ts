@@ -178,7 +178,7 @@ export const sendPages = async function (
   pages: EmbedBuilder[]
 ) {
   if (pages.length == 1) {
-    interaction.reply({
+    interaction.followUp({
       embeds: [pages[0]],
     });
   } else {
