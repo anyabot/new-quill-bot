@@ -31,6 +31,6 @@ const client = new import_framework.SapphireClient({
 });
 (async () => {
   console.log(process.env.BOT_TOKEN);
-  await client.login("NjAwMTM3ODk1ODE4Mjk3MzY0.G5pRLn.MPKDUl1GScSUgIHQBnlf-gTS-JNb3RbL61aHQE");
+  await client.login(process.env.BOT_TOKEN);
   console.log("HERE?");
 })();
