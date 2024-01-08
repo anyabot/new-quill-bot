@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node --no-warnings=ExperimentalWarning --loader ts-node-esm src/index.ts",
+    "start": "npx tsx src/index.ts",
     "dev": "nodemon src/index.ts"
   },
   "author": "",
@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.2.16",
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "tsx": "^4.7.0"
   }
 }
