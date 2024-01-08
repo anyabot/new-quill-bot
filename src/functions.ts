@@ -26,6 +26,7 @@ function titleCase(str: string) {
 }
 export const nameChange = function nameChange(text: string) {
   var unit = titleCase(text.toLowerCase());
+  unit = unit.replace(/\-[a-z]/g, match => match.toUpperCase())
   var np = unit.split(" ");
   var npl = np.length;
   if (npl >= 2) {
