@@ -42,7 +42,7 @@ export class ImageCommand extends Command {
           let temp = $(this);
           if (temp.attr("title")!.includes("Render")) {
             img = temp.attr("data-src");
-            let nam = temp.attr("alt") || "";
+            let nam = temp.attr("title") || "";
             let pa = nam.split(" Render");
             if (img && pa.length > 1) {
               nam = pa[0];
